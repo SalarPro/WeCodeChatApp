@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               "Welcome",
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.w300),
             ),
@@ -27,11 +27,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.grey[900],
                   height: 25,
                 )),
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
-                child: Text('Login'))
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/login');
+                        },
+                        child: Text('Login')),
+                  ),
+                  const VerticalDivider(),
+                  Expanded(
+                    child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/register');
+                        },
+                        child: Text('Register')),
+                  )
+                ],
+              ),
+            )
           ],
         ),
       ),
