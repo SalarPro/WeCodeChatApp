@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wecode2/src/custom_view/custome_view.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({Key? key}) : super(key: key);
@@ -8,52 +9,45 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _messageController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text(
-              "Welcome",
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w300),
-            ),
-            Container(
-                padding: EdgeInsets.only(left: 50, right: 50),
-                child: Divider(
-                  color: Colors.grey[900],
-                  height: 25,
-                )),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.center,
+        appBar: AppBar(),
+        body: Container(
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  Expanded(
-                    child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/login');
-                        },
-                        child: Text('Login')),
+                  TextFormField(
+                    controller: _messageController,
+                    decoration:
+                        CustomView.ganeralInputDecoration(labelText: "labelText"),
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return 'the phone number is required';
+                      } else
+                        return null;
+                    },
                   ),
-                  const VerticalDivider(),
-                  Expanded(
-                    child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/register');
-                        },
-                        child: Text('Register')),
-                  )
+
+                  ElevatedButton.icon(
+                  onPressed: () async {
+                    setState(() {
+                      
+                    });
+                  },
+                  icon: Icon(
+                    Icons.login,
+                  ),
+                  label: Text(""),
+                ),
+
                 ],
-              ),
-            )
-          ],
-        ),
-      ),
-    );
+              )
+            ],
+          ),
+        ));
   }
 }
