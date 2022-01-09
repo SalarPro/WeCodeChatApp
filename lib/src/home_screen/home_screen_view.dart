@@ -42,13 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         return ListView.builder(
                             itemCount: _users.length,
                             itemBuilder: (context, index) {
-                              return Text(_users[index].message ?? 'no message');
+                              return Text(
+                                  _users[index].message ?? 'no message');
                             });
                       }
                       return LinearProgressIndicator();
                     },
                   ),
-                  
                   TextFormField(
                     controller: _messageController,
                     decoration: CustomView.ganeralInputDecoration(
@@ -63,15 +63,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ElevatedButton.icon(
                     onPressed: () async {
                       setState(() {
+                        if (_messageController.value.text != "") {
+                          Message mes = Message(
+                              message: _messageController.value.text.trim());
 
-                        if  (_messageController.value.text != ""){
-                              await FirebaseFirestore.instance
-                                .collection('users')
-
-
+                          FirebaseFirestore.instance
+                              .collection('users')
+                              .add(mes.toMap());
                         }
-
-
                       });
                     },
                     icon: Icon(
