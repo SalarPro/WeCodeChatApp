@@ -20,65 +20,70 @@ class _HomeScreenState extends State<HomeScreen> {
         body: Container(
           child: Column(
             children: [
-              Row(
-                children: [
-                  FutureBuilder<QuerySnapshot>(
-                    future:
-                        FirebaseFirestore.instance.collection('messages').get(),
+              Expanded(
+                child: Container(
+                  height: 400,
+                  color: Colors.black12,
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('messages')
+                        .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
                         return Text('error');
                       } else if (!snapshot.hasData || snapshot.data == null) {
                         return Text('empty');
                       } else if (snapshot.connectionState ==
-                          ConnectionState.done) {
-                        List<DocumentSnapshot> _docs = snapshot.data!.docs;
-
-                        List<Message> _users = _docs
-                            .map((e) => Message.fromMap(
-                                e.data() as Map<String, dynamic>))
-                            .toList();
-
-                        return ListView.builder(
-                            itemCount: _users.length,
-                            itemBuilder: (context, index) {
-                              return Text(
-                                  _users[index].message ?? 'no message');
-                            });
+                          ConnectionState.waiting) {
+                        return LinearProgressIndicator();
                       }
-                      return LinearProgressIndicator();
-                    },
-                  ),
-                  TextFormField(
-                    controller: _messageController,
-                    decoration: CustomView.ganeralInputDecoration(
-                        labelText: "labelText"),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'the phone number is required';
-                      } else
-                        return null;
-                    },
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      setState(() {
-                        if (_messageController.value.text != "") {
-                          Message mes = Message(
-                              message: _messageController.value.text.trim());
+                      List<DocumentSnapshot> _docs = snapshot.data!.docs;
 
-                          FirebaseFirestore.instance
-                              .collection('users')
-                              .add(mes.toMap());
-                        }
-                      });
+                      List<Message> _users = _docs
+                          .map((e) =>
+                              Message.fromMap(e.data() as Map<String, dynamic>))
+                          .toList();
+
+                      return ListView.builder(
+                          itemCount: _users.length,
+                          itemBuilder: (context, index) {
+                            return Text(_users[index].message ?? 'no message');
+                          });
                     },
-                    icon: Icon(
-                      Icons.login,
-                    ),
-                    label: Text(""),
                   ),
-                ],
+                ),
+              ),
+              SizedBox(
+                height: 50,
+              ),
+              TextFormField(
+                controller: _messageController,
+                decoration:
+                    CustomView.ganeralInputDecoration(labelText: "labelText"),
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'the phone number is required';
+                  } else
+                    return null;
+                },
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() async {
+                    if (_messageController.value.text != "") {
+                      Message mes = Message(
+                          message: _messageController.value.text.trim());
+
+                      await FirebaseFirestore.instance
+                          .collection('messages')
+                          .add(mes.toMap());
+                    }
+                  });
+                },
+                icon: Icon(
+                  Icons.login,
+                ),
+                label: Text(""),
               )
             ],
           ),
