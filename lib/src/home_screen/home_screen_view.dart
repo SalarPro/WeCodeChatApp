@@ -20,13 +20,23 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _messageController = TextEditingController();
 
   String username = "ENTER_YOUR_NAME";
+  TextEditingController _textFieldController = TextEditingController();
   //to scroll the view when reciving new message
   final ScrollController? _scrollController = ScrollController();
 
   @override
+  void initState() {
+    Future.delayed(Duration.zero, () => showAlert(context));
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Text(username),
+        backgroundColor: Colors.transparent,
+      ),
       body: Container(
         child: Column(
           children: [
@@ -221,5 +231,43 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       });
     }
+  }
+
+  void showAlert(BuildContext context) {
+    final _formKey = GlobalKey<FormState>();
+
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              content: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Form(
+                    key: _formKey,
+                    child: TextFormField(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
+                      controller: _textFieldController,
+                      decoration: InputDecoration(hintText: "Enter your name"),
+                    ),
+                  ),
+                  ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_formKey.currentState!.validate()) {
+                            username = _textFieldController.text;
+
+                            Navigator.pop(context);
+                          }
+                        });
+                      },
+                      child: Text("insert"))
+                ],
+              ),
+            ));
   }
 }
