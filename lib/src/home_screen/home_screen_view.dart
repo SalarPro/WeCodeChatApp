@@ -35,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        backgroudImage(),
+        backgroudImage2(),
         Scaffold(
           backgroundColor: Colors.transparent,
           extendBodyBehindAppBar: true,
@@ -404,6 +404,28 @@ class _HomeScreenState extends State<HomeScreen> {
           image: DecorationImage(
             image: AssetImage('src/image/bg1.png'),
             fit: BoxFit.fill,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget backgroudImage2() {
+    return ShaderMask(
+      shaderCallback: (bounds) => LinearGradient(
+        colors: [Colors.black, Colors.black12],
+        begin: Alignment.bottomCenter,
+        end: Alignment.center,
+      ).createShader(bounds),
+      blendMode: BlendMode.darken,
+      child: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('src/image/bg1.png'),
+
+            /// change this to your  image directory
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black45, BlendMode.darken),
           ),
         ),
       ),
