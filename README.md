@@ -4,7 +4,7 @@
 
 # PFM (Personal Finance Manager)
 
-![Product Name Screen Shot](https://github.com/SalarPro/WeCodeChatApp/blob/master/github_src/screenshoot_1.png)
+![Product Name Screen Shot](https://github.com/SalarPro/WeCodeChatApp/blob/master/github_src/screenshoot_1.jpg)
 
 
 A new Flutter project.
