@@ -4,8 +4,9 @@ class Message {
   String? message;
   Timestamp? createdAt;
   String? username;
+  String? uid;
 
-  Message({this.message, this.createdAt, this.username});
+  Message({this.message, this.createdAt, this.username, this.uid});
 
   // from map which reads the data from the database
 
@@ -13,6 +14,7 @@ class Message {
         message: json["message"],
         createdAt: json["createdAt"],
         username: json["username"],
+        uid: json["uid"],
       );
 
   // toMap()
@@ -20,5 +22,6 @@ class Message {
         "message": message,
         "createdAt": createdAt,
         "username": username,
+        "uid": uid,
       };
 }

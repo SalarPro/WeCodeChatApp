@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import 'package:wecode2/src/custom_view/custome_view.dart';
 import 'package:wecode2/src/data_model/message_model.dart';
 import 'package:intl/intl.dart';
@@ -19,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _messageController = TextEditingController();
 
-  String username = "ENTER_YOUR_NAME";
+  String username = "null_user";
   TextEditingController _textFieldController = TextEditingController();
   //to scroll the view when reciving new message
   final ScrollController? _scrollController = ScrollController();
@@ -32,91 +33,128 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(username),
-        backgroundColor: Colors.transparent,
-      ),
-      body: Container(
-        child: Column(
-          children: [
-            Expanded(
-              child: Container(
-                  child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('messages')
-                    .orderBy("createdAt")
-                    .snapshots(),
-                builder: (BuildContext context,
-                    AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (snapshot.hasError) {
-                    return loadingProgressIndicator();
-                  } else if (!snapshot.hasData || snapshot.data == null) {
-                    return loadingProgressIndicator();
-                  } else {
-                    List<DocumentSnapshot> _docs = snapshot.data!.docs;
-
-                    List<Message> _users = _docs
-                        .map((e) =>
-                            Message.fromMap(e.data() as Map<String, dynamic>))
-                        .toList();
-                    _scrollDown();
-                    return ListView.builder(
-                        controller: _scrollController,
-                        itemCount: _users.length,
-                        itemBuilder: (context, index) {
-                          bool isMe = (username.toLowerCase() ==
-                              _users[index].username.toString().toLowerCase());
-                          if (isMe) {
-                            return myBuble(_users[index]);
-                          } else {
-                            return partnerBuble(_users[index]);
-                          }
-                        });
-                  }
-                },
-              )),
-            ),
-            Container(
-              padding: EdgeInsets.all(8),
-              color: Colors.lightBlue[100],
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _messageController,
-                      decoration: CustomView.ganeralInputDecoration(
-                          labelText: "Message..."),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'The message is required';
-                        } else
-                          return null;
-                      },
-                    ),
+    return Stack(
+      children: [
+        backgroudImage(),
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            shadowColor: Colors.blue,
+            title: Row(
+              children: [
+                Container(
+                    width: 40,
+                    height: 40,
+                    child: Image(image: AssetImage('src/image/profile.png'))),
+                SizedBox(
+                  width: 10,
+                ),
+                Expanded(
+                    child: Text(
+                  username == "null_user" ? "" : username.toTitleCase(),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: () async {
-                      if (_messageController.value.text != "") {
-                        Message mes = Message(
-                            message: _messageController.value.text.trim(),
-                            username: username,
-                            createdAt: Timestamp.fromDate(DateTime.now()));
-                        _messageController.text = "";
-                        await FirebaseFirestore.instance
-                            .collection('messages')
-                            .add(mes.toMap())
-                            .then((value) {});
+                )),
+                Container(
+                    width: 40,
+                    height: 40,
+                    child: Image(image: AssetImage('src/image/chat.png'))),
+              ],
+            ),
+            backgroundColor: Colors.transparent,
+          ),
+          body: Container(
+            child: Column(
+              children: [
+                Expanded(
+                  child: Container(
+                      child: StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('messages')
+                        .orderBy("createdAt")
+                        .snapshots(),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return loadingProgressIndicator();
+                      } else if (!snapshot.hasData || snapshot.data == null) {
+                        return loadingProgressIndicator();
+                      } else {
+                        List<DocumentSnapshot> _docs = snapshot.data!.docs;
+
+                        List<Message> _users = _docs
+                            .map((e) => Message.fromMap(
+                                e.data() as Map<String, dynamic>))
+                            .toList();
+                        _scrollDown();
+                        return ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _users.length,
+                            itemBuilder: (context, index) {
+                              bool isMe = (username.toLowerCase() ==
+                                  _users[index]
+                                      .username
+                                      .toString()
+                                      .toLowerCase());
+                              if (!isMe || username == "ENTER_YOUR_NAME") {
+                                return partnerBuble(_users[index]);
+                              } else {
+                                return myBuble(_users[index]);
+                              }
+                            });
                       }
                     },
+                  )),
+                ),
+                Container(
+                  color: Colors.white,
+                  padding: EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _messageController,
+                          decoration: CustomView.ganeralInputDecoration(
+                              labelText: "Message..."),
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return 'The message is required';
+                            } else
+                              return null;
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        color: Colors.blue[800],
+                        onPressed: () async {
+                          if (_messageController.value.text != "") {
+                            String _uid = Uuid().v1();
+                            Message mes = Message(
+                                message: _messageController.value.text.trim(),
+                                username: username,
+                                uid: _uid,
+                                createdAt: Timestamp.fromDate(DateTime.now()));
+                            _messageController.text = "";
+                            await FirebaseFirestore.instance
+                                .collection('messages')
+                                .doc(_uid)
+                                .set(mes.toMap())
+                                .then((value) {});
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        )
+      ],
     );
   }
 
@@ -125,13 +163,14 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(child: Container()),
         CircularProgressIndicator(
-          color: Colors.yellow,
+          color: Colors.blue[500],
         ),
         Expanded(child: Container()),
       ],
     );
   }
 
+//partner Buble
   Row partnerBuble(Message message) {
     return Row(
       children: [
@@ -142,27 +181,55 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               //username Text
-              Container(child: Text(message.username ?? 'Anonymous')),
               Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.green[500],
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(20),
-                    topLeft: Radius.circular(0),
-                    bottomRight: Radius.circular(20),
-                    bottomLeft: Radius.circular(10),
+                  child: Text(
+                (message.username ?? 'Anonymous').toTitleCase(),
+                style: TextStyle(color: Colors.white, fontSize: 13),
+              )),
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[800],
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(20),
+                        topLeft: Radius.circular(0),
+                        bottomRight: Radius.circular(20),
+                        bottomLeft: Radius.circular(10),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          message.message ?? 'no message',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        Container(
+                          margin: EdgeInsets.only(top: 3),
+                          child: Text(
+                            DateFormat('hh:kk')
+                                .format(message.createdAt!.toDate()),
+                            style: TextStyle(fontSize: 8, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                child: Text(message.message ?? 'no message'),
-              ),
-              Container(
-                margin: EdgeInsets.only(top: 3),
-                child: Text(
-                  DateFormat('yyyy-MM-dd hh:mma')
-                      .format(message.createdAt!.toDate()),
-                  style: TextStyle(fontSize: 8),
-                ),
+                  // IconButton(
+                  //   icon: const Icon(Icons.delete),
+                  //   onPressed: () async {
+                  //     await FirebaseFirestore.instance
+                  //         .collection("messages")
+                  //         .doc(message.uid!)
+                  //         .delete();
+                  //   },
+                  // ),
+                ],
               ),
             ],
           ),
@@ -175,6 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+//User Buble
   Row myBuble(Message message) {
     return Row(
       children: [
@@ -188,27 +256,54 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(message.username ?? 'Anonymous'),
-              Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.yellow,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(0),
-                    topLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(10),
-                    bottomLeft: Radius.circular(20),
+              // Text(message.username ?? 'Anonymous'),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
+                    onPressed: () async {
+                      await FirebaseFirestore.instance
+                          .collection("messages")
+                          .doc(message.uid!)
+                          .delete();
+                    },
                   ),
-                ),
-                child: Text(message.message ?? 'no message'),
-              ),
-              Container(
-                margin: EdgeInsets.only(top: 3),
-                child: Text(
-                  DateFormat('yyyy-MM-dd hh:mma')
-                      .format(message.createdAt!.toDate()),
-                  style: TextStyle(fontSize: 8),
-                ),
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[700],
+                      borderRadius: BorderRadius.only(
+                        topRight: Radius.circular(0),
+                        topLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(10),
+                        bottomLeft: Radius.circular(20),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          message.message ?? 'no message',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        Container(
+                          margin: EdgeInsets.only(top: 3),
+                          child: Text(
+                            DateFormat('hh:kk')
+                                .format(message.createdAt!.toDate()),
+                            style: TextStyle(fontSize: 8, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -239,35 +334,64 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              content: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Form(
-                    key: _formKey,
-                    child: TextFormField(
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your name';
-                        }
-                        return null;
-                      },
-                      controller: _textFieldController,
-                      decoration: InputDecoration(hintText: "Enter your name"),
-                    ),
-                  ),
-                  ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          if (_formKey.currentState!.validate()) {
-                            username = _textFieldController.text;
-
-                            Navigator.pop(context);
+              content: Container(
+                height: 150,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Form(
+                      key: _formKey,
+                      child: TextFormField(
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your name';
                           }
-                        });
-                      },
-                      child: Text("insert"))
-                ],
+                          return null;
+                        },
+                        controller: _textFieldController,
+                        decoration:
+                            InputDecoration(hintText: "Enter your name"),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 25,
+                    ),
+                    ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            if (_formKey.currentState!.validate()) {
+                              username = _textFieldController.text;
+
+                              Navigator.pop(context);
+                            }
+                          });
+                        },
+                        child: Text("Start Chating"))
+                  ],
+                ),
               ),
             ));
   }
+
+  Widget backgroudImage() {
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('src/image/bg1.png'),
+            fit: BoxFit.fill,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+extension StringCasingExtension on String {
+  String toCapitalized() =>
+      length > 0 ? '${this[0].toUpperCase()}${substring(1).toLowerCase()}' : '';
+  String toTitleCase() => replaceAll(RegExp(' +'), ' ')
+      .split(' ')
+      .map((str) => str.toCapitalized())
+      .join(' ');
 }
