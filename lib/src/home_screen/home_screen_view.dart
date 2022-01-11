@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:wecode2/src/custom_view/custome_view.dart';
 import 'package:wecode2/src/data_model/message_model.dart';
@@ -25,64 +26,60 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(),
-        body: Container(
-          child: Column(
-            children: [
-              Expanded(
-                child: Container(
-                    color: Colors.black12,
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('messages')
-                          .orderBy("createdAt")
-                          .snapshots(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<QuerySnapshot> snapshot) {
-                        if (snapshot.hasError) {
-                          return Text('error');
-                        } else if (!snapshot.hasData || snapshot.data == null) {
-                          return Text('empty');
-                        } else {
-                          List<DocumentSnapshot> _docs = snapshot.data!.docs;
+      appBar: AppBar(),
+      body: Container(
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                  child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('messages')
+                    .orderBy("createdAt")
+                    .snapshots(),
+                builder: (BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.hasError) {
+                    return loadingProgressIndicator();
+                  } else if (!snapshot.hasData || snapshot.data == null) {
+                    return loadingProgressIndicator();
+                  } else {
+                    List<DocumentSnapshot> _docs = snapshot.data!.docs;
 
-                          List<Message> _users = _docs
-                              .map((e) => Message.fromMap(
-                                  e.data() as Map<String, dynamic>))
-                              .toList();
-                          _scrollDown();
-                          return ListView.builder(
-                              controller: _scrollController,
-                              itemCount: _users.length,
-                              itemBuilder: (context, index) {
-                                bool isMe = (username.toLowerCase() ==
-                                    _users[index]
-                                        .username
-                                        .toString()
-                                        .toLowerCase());
-                                if (isMe) {
-                                  return myBuble(isMe, _users, index);
-                                } else {
-                                  return partnerBuble(_users, index, isMe);
-                                }
-                              });
-                        }
-                      },
-                    )),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Row(
+                    List<Message> _users = _docs
+                        .map((e) =>
+                            Message.fromMap(e.data() as Map<String, dynamic>))
+                        .toList();
+                    _scrollDown();
+                    return ListView.builder(
+                        controller: _scrollController,
+                        itemCount: _users.length,
+                        itemBuilder: (context, index) {
+                          bool isMe = (username.toLowerCase() ==
+                              _users[index].username.toString().toLowerCase());
+                          if (isMe) {
+                            return myBuble(_users[index]);
+                          } else {
+                            return partnerBuble(_users[index]);
+                          }
+                        });
+                  }
+                },
+              )),
+            ),
+            Container(
+              padding: EdgeInsets.all(8),
+              color: Colors.lightBlue[100],
+              child: Row(
                 children: [
                   Expanded(
                     child: TextFormField(
                       controller: _messageController,
-                      decoration:
-                          CustomView.ganeralInputDecoration(labelText: "Aa.."),
+                      decoration: CustomView.ganeralInputDecoration(
+                          labelText: "Message..."),
                       validator: (value) {
                         if (value!.isEmpty) {
-                          return 'the phone number is required';
+                          return 'The message is required';
                         } else
                           return null;
                       },
@@ -96,21 +93,36 @@ class _HomeScreenState extends State<HomeScreen> {
                             message: _messageController.value.text.trim(),
                             username: username,
                             createdAt: Timestamp.fromDate(DateTime.now()));
-
+                        _messageController.text = "";
                         await FirebaseFirestore.instance
                             .collection('messages')
-                            .add(mes.toMap());
+                            .add(mes.toMap())
+                            .then((value) {});
                       }
                     },
                   ),
                 ],
               ),
-            ],
-          ),
-        ));
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Row partnerBuble(List<Message> _users, int index, bool isMe) {
+  Column loadingProgressIndicator() {
+    return Column(
+      children: [
+        Expanded(child: Container()),
+        CircularProgressIndicator(
+          color: Colors.yellow,
+        ),
+        Expanded(child: Container()),
+      ],
+    );
+  }
+
+  Row partnerBuble(Message message) {
     return Row(
       children: [
         Container(
@@ -120,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               //username Text
-              Container(child: Text(_users[index].username ?? 'Anonymous')),
+              Container(child: Text(message.username ?? 'Anonymous')),
               Container(
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -132,13 +144,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     bottomLeft: Radius.circular(10),
                   ),
                 ),
-                child: Text(_users[index].message ?? 'no message'),
+                child: Text(message.message ?? 'no message'),
               ),
               Container(
                 margin: EdgeInsets.only(top: 3),
                 child: Text(
                   DateFormat('yyyy-MM-dd hh:mma')
-                      .format(_users[index].createdAt!.toDate()),
+                      .format(message.createdAt!.toDate()),
                   style: TextStyle(fontSize: 8),
                 ),
               ),
@@ -147,18 +159,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         Expanded(
             child: SizedBox(
-          width: isMe ? 100 : 0,
+          width: 50,
         )),
       ],
     );
   }
 
-  Row myBuble(bool isMe, List<Message> _users, int index) {
+  Row myBuble(Message message) {
     return Row(
       children: [
         Expanded(
             child: SizedBox(
-          width: isMe ? 100 : 0,
+          width: 50,
         )),
         Container(
           padding: EdgeInsets.all(0),
@@ -166,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(_users[index].username ?? 'Anonymous'),
+              Text(message.username ?? 'Anonymous'),
               Container(
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -178,13 +190,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     bottomLeft: Radius.circular(20),
                   ),
                 ),
-                child: Text(_users[index].message ?? 'no message'),
+                child: Text(message.message ?? 'no message'),
               ),
               Container(
                 margin: EdgeInsets.only(top: 3),
                 child: Text(
                   DateFormat('yyyy-MM-dd hh:mma')
-                      .format(_users[index].createdAt!.toDate()),
+                      .format(message.createdAt!.toDate()),
                   style: TextStyle(fontSize: 8),
                 ),
               ),
