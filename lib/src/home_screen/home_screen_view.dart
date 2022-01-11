@@ -110,15 +110,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   )),
                 ),
                 Container(
-                  color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(30),
+                      topLeft: Radius.circular(30),
+                    ),
+                  ),
                   padding: EdgeInsets.all(8),
                   child: Row(
                     children: [
                       Expanded(
                         child: TextFormField(
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 18,
+                          ),
                           controller: _messageController,
-                          decoration: CustomView.ganeralInputDecoration(
-                              labelText: "Message..."),
+                          // decoration: CustomView.ganeralInputDecoration(
+                          //     labelText: "Message..."),
+                          decoration: InputDecoration(
+                            hintText: "Message...",
+                          ),
                           validator: (value) {
                             if (value!.isEmpty) {
                               return 'The message is required';
@@ -127,26 +140,37 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        color: Colors.blue[800],
-                        onPressed: () async {
-                          if (_messageController.value.text != "") {
-                            String _uid = Uuid().v1();
-                            Message mes = Message(
-                                message: _messageController.value.text.trim(),
-                                username: username,
-                                uid: _uid,
-                                createdAt: Timestamp.fromDate(DateTime.now()));
-                            _messageController.text = "";
-                            await FirebaseFirestore.instance
-                                .collection('messages')
-                                .doc(_uid)
-                                .set(mes.toMap())
-                                .then((value) {});
-                          }
-                        },
+                      Container(
+                        width: 45,
+                        height: 45,
+                        child: TextButton(
+                            onPressed: () async {
+                              if (_messageController.value.text != "") {
+                                String _uid = Uuid().v1();
+                                Message mes = Message(
+                                    message:
+                                        _messageController.value.text.trim(),
+                                    username: username,
+                                    uid: _uid,
+                                    createdAt:
+                                        Timestamp.fromDate(DateTime.now()));
+                                _messageController.text = "";
+                                await FirebaseFirestore.instance
+                                    .collection('messages')
+                                    .doc(_uid)
+                                    .set(mes.toMap())
+                                    .then((value) {});
+                              }
+                            },
+                            child: Column(
+                              children: <Widget>[
+                                Image.asset('src/image/send.png')
+                              ],
+                            )),
                       ),
+                      SizedBox(
+                        width: 4,
+                      )
                     ],
                   ),
                 ),
